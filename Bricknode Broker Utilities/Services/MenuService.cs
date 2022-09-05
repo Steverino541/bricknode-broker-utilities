@@ -1,10 +1,25 @@
 ﻿using System.Text;
+using BfsApi;
+using Bricknode.Soap.Sdk.Services;
+using Bricknode_Broker_Utilities.Contracts.Settings;
 using ConsoleTables;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Bricknode_Broker_Utilities.Services;
 
 public class MenuService
 {
+    private readonly UserSecrets _secrets;
+    private readonly IBfsAuthenticationService _authenticationService;
+
+    public MenuService(IOptions<UserSecrets> secrets, IBfsAuthenticationService authenticationService, ILogger<MenuService> logger)
+    {
+        _authenticationService = authenticationService;
+        _secrets = secrets.Value;
+    }
+
     public async Task ShowMenu()
     {
         var sb = new StringBuilder(514);
@@ -30,12 +45,77 @@ public class MenuService
         Console.WriteLine($"                                                              ");
         Console.WriteLine($"--------------------------------------------------------------");
 
+        Console.WriteLine($"");
+        Console.WriteLine($"Start by logging in on an instance of Bricknode Broker below:");
+        Console.WriteLine($"");
+
+        var counter = 0;
+        var bfsInstanceDictionary = new Dictionary<int, string>();
+
+        foreach (var bfsCredentials in _secrets.BfsCredentials)
+        {
+            Console.WriteLine($"{counter}. {bfsCredentials.BfsInstanceKey} - {bfsCredentials.ApiEndpoint}");
+            bfsInstanceDictionary.Add(counter, bfsCredentials.BfsInstanceKey);
+            counter++;
+        }
+
+        Console.WriteLine($"");
+        Console.WriteLine($"Enter the number of the instance and press enter:");
+        var selectedBfsInstanceNumber = Console.ReadLine();
+
+        var selectedBfsInstanceKey = bfsInstanceDictionary[int.Parse(selectedBfsInstanceNumber ?? string.Empty)];
+
+        if (string.IsNullOrEmpty(selectedBfsInstanceKey))
+        {
+            throw new Exception($"The selected Bricknode Broker instance could not be found");
+        }
+
+        Console.WriteLine($"Enter your username and press enter:");
+        var username = Console.ReadLine();
+
+        Console.WriteLine($"Enter your password and press enter:");
+
+        var pass = string.Empty;
+        ConsoleKey key;
+        do
+        {
+            var keyInfo = Console.ReadKey(intercept: true);
+            key = keyInfo.Key;
+
+            if (key == ConsoleKey.Backspace && pass.Length > 0)
+            {
+                Console.Write("\b \b");
+                pass = pass[0..^1];
+            }
+            else if (!char.IsControl(keyInfo.KeyChar))
+            {
+                Console.Write("*");
+                pass += keyInfo.KeyChar;
+            }
+        } while (key != ConsoleKey.Enter);
+
+        var password = pass;
+
+        Console.WriteLine("");
+
+        if (!(await _authenticationService.UsernamePasswordAuthenticationAsync(Domain.Admin, username, password,
+                selectedBfsInstanceKey)).IsAuthenticated)
+        {
+            Console.WriteLine($"The credentials did not work, please start the application again.");
+            return;
+        }
+
+        Console.WriteLine($"Congratulations, you are authenticated!");
+        Console.WriteLine("");
+
         var menuTable = new ConsoleTable("Menu item", "Description");
-        menuTable.AddRow(1, $"Change acquisition value on a position");
+        menuTable.AddRow(1, $"Create a transaction");
         menuTable.Write(Format.Alternative);
 
         Console.WriteLine($"Enter menu item and press enter:");
         var selectedMenuItem = Console.ReadLine();
 
+        Console.WriteLine("Done");
+        Console.ReadLine();
     }
 }

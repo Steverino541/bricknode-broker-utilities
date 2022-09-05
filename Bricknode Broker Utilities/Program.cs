@@ -47,8 +47,8 @@ public class Program
                         bfsApiConfiguration.Identifier = bricknodeBrokerInstance.Identifier;
                     });
                 }
-
-                AddServices(services);
+                clientBuilder.BuildClients();
+                AddServices(services, hostContext);
 
             })
             .ConfigureLogging((hostingContext, logging) =>
@@ -60,8 +60,12 @@ public class Program
         return builder.Build();
     }
 
-    private static void AddServices(IServiceCollection services)
+    private static void AddServices(IServiceCollection services, HostBuilderContext context)
     {
         services.AddTransient<MenuService>();
+        services.AddSingleton(sp => sp.GetRequiredService<ILoggerFactory>().CreateLogger("DefaultLogger"));
+        services.Configure<UserSecrets>(context.Configuration.GetSection("UserSecrets"));
+        services.AddOptions();
+
     }
 }

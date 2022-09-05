@@ -13,10 +13,12 @@ public class MenuService
 {
     private readonly UserSecrets _secrets;
     private readonly IBfsAuthenticationService _authenticationService;
+    private readonly TransactionService _transactionService;
 
-    public MenuService(IOptions<UserSecrets> secrets, IBfsAuthenticationService authenticationService, ILogger<MenuService> logger)
+    public MenuService(IOptions<UserSecrets> secrets, IBfsAuthenticationService authenticationService, ILogger<MenuService> logger, TransactionService transactionService)
     {
         _authenticationService = authenticationService;
+        _transactionService = transactionService;
         _secrets = secrets.Value;
     }
 
@@ -113,9 +115,14 @@ public class MenuService
         menuTable.Write(Format.Alternative);
 
         Console.WriteLine($"Enter menu item and press enter:");
-        var selectedMenuItem = Console.ReadLine();
+        var selectedMenuItem = int.Parse(Console.ReadLine() ?? throw new InvalidOperationException());
 
-        Console.WriteLine("Done");
-        Console.ReadLine();
+        switch (selectedMenuItem)
+        {
+            case 1:
+                await _transactionService.DepositCash();
+                break;
+        }
+
     }
 }

@@ -63,6 +63,7 @@ public class Program
     private static void AddServices(IServiceCollection services, HostBuilderContext context)
     {
         services.AddTransient<MenuService>();
+        services.AddTransient<TransactionService>();
         services.AddSingleton(sp => sp.GetRequiredService<ILoggerFactory>().CreateLogger("DefaultLogger"));
         services.Configure<UserSecrets>(context.Configuration.GetSection("UserSecrets"));
         services.AddOptions();

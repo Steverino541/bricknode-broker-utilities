@@ -120,7 +120,7 @@ public class MenuService
         switch (selectedMenuItem)
         {
             case 1:
-                await _transactionService.DepositCash();
+                await _transactionService.DepositCash(selectedBfsInstanceKey);
                 break;
         }
 

@@ -64,6 +64,7 @@ public class Program
     {
         services.AddTransient<MenuService>();
         services.AddTransient<TransactionService>();
+        services.AddTransient<BfsDataService>();
         services.AddSingleton(sp => sp.GetRequiredService<ILoggerFactory>().CreateLogger("DefaultLogger"));
         services.Configure<UserSecrets>(context.Configuration.GetSection("UserSecrets"));
         services.AddOptions();
